@@ -46,7 +46,12 @@
       </button>
     </div>
     <div class="result" id="table-result">
-      <h2>BẢNG XÁC ĐỊNH GIÁ PHẦN MỀM</h2>
+      <div>
+        <h2>BẢNG XÁC ĐỊNH GIÁ PHẦN MỀM</h2>
+        <button class="btn btn-primary" onclick="Download()">
+          Tải kết quả
+        </button>
+      </div>
       <br />
       <table class="table">
         <thead>
@@ -69,6 +74,20 @@
     });
 
     document.getElementById("table-result").style.display = "none";
+
+    var newWB;
+    function Download() {
+      // download file
+      XLSX.utils.book_new("result.xlsx");
+      XLSX.writeFile(newWB, "result.xlsx");
+
+      var a = document.createElement("a");
+      a.download = "result.xlsx";
+      document.body.appendChild(a);
+      done = true;
+      a.click();
+      document.body.removeChild(a);
+    }
 
     function Upload() {
       // Get selected files from the input element.
@@ -364,6 +383,7 @@
             resultSheet[`D15`] = { t: "n", v: G, w: `${G}` };
           }
 
+          newWB = workbook;
           console.log("TAW: ", TAW);
           console.log("TBF: ", TBF);
           console.log("TFW: ", TFW, "TCF: ", TCF);
@@ -447,7 +467,7 @@
                     <td><b>IV</b></td>
                     <td><b>Mức lương lao động bình quân (H)</b></td>
                     <td><b>H: người/giờ</b></td>
-                    <td><b>${averageSalaryHour}</b></td>
+                    <td><b>${formatter.format(averageSalaryHour)}</b></td>
                     <td></td>
                 </tr>
                 <tr>
@@ -458,19 +478,6 @@
                     <td></td>
                 </tr>
                 `);
-
-          // download file
-          {
-            XLSX.utils.book_new("result.xlsx");
-            XLSX.writeFile(workbook, "result.xlsx");
-
-            var a = document.createElement("a");
-            a.download = "result.xlsx";
-            document.body.appendChild(a);
-            done = true;
-            a.click();
-            document.body.removeChild(a);
-          }
         };
 
         reader.onerror = function (ex) {
