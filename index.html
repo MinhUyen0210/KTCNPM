@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta
+        http-equiv="X-UA-Compatible"
+        content="IE=edge"
+    >
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+    <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css"
+        integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
+        crossorigin="anonymous"
+    >
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.8.0/jszip.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.8.0/xlsx.js"></script>
+    <script src="https://code.jquery.com/jquery-3.5.0.js"></script>
+    <title>Xác định chi phí phần mềm nội bộ</title>
+</head>
+<style>
+    h2 {
+        text-align: center;
+    }
+
+    .result {
+        margin-top: 50px;
+        margin-left: 100px;
+        margin-right: 100px;
+        margin-bottom: 50px;
+    }
+
+    .container {
+        padding-top: 100px;
+    }
+</style>
+
+<body>
+    <div
+        class="container"
+        id="container"
+    >
+        <h3>Chọn file để xử lý</h3>
+        <br>
+        <input
+            type="file"
+            name=""
+            id="file-data"
+            accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        >
+        <button
+            id="btn-upload"
+            class="btn btn-primary"
+            onclick="Upload()"
+        >Xử lý</button>
+    </div>
+    <div
+        class="result"
+        id="table-result"
+    >
+        <h2>BẢNG XÁC ĐỊNH GIÁ PHẦN MỀM</h2>
+        <br>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>TT</th>
+                    <th>Hạng mục</th>
+                    <th>Diễn giải</th>
+                    <th>Giá trị</th>
+                    <th>Ghi chú</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+</body>
+<script>
+    var formatter = new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'VND',
+    });
+
+    document.getElementById('table-result').style.display = "none";
+    function Upload() {
+        // Get selected files from the input element.
+        var file = document.getElementById("file-data").files[0];
+
+        if (file) {
+            document.getElementById('container').style.display = "none";
+
+            var reader = new FileReader();
+
+            var TAW = 0, TBF = 0, TFW = 0, TCF = 0;
+            var EFW = 0, ES = 0, P = 0;
+            var totalSalaryMonth = 0, averageSalaryMonth = 0, averageSalaryHour = 0, totalMan = 0;
+
+            reader.onload = function (e) {
+
+                var data = e.target.result;
+                var workbook = XLSX.read(data, {
+                    type: 'binary'
+                });
+
+                // Bang tinh diem cua cac tac nhan
+                {
+                    var actorSheet = workbook.Sheets[workbook.SheetNames[1]]
+                    var simpleActors = +actorSheet['D4']['v'];
+                    var mediumActors = +actorSheet['D5']['v'];
+                    var hardActors = +actorSheet['D6']['v'];
+
+                    TAW = simpleActors + mediumActors * 2 + hardActors * 3;
+                    // console.log("TAW: ", TAW);
+                }
+
+                // Bang tinh diem Use-case
+                {
+                    var usecasesSheet = workbook.Sheets[workbook.SheetNames[2]]
+
+                    var typeB = {
+                        simple: +usecasesSheet['C5']['v'] * 5,
+                        medium: +usecasesSheet['C6']['v'] * 10,
+                        hard: +usecasesSheet['C7']['v'] * 15,
+                    }
+                    typeB.sum = typeB.simple + typeB.medium + typeB.hard
+
+                    var typeM = {
+                        simple: +usecasesSheet['C9']['v'] * 6,
+                        medium: +usecasesSheet['C10']['v'] * 12,
+                        hard: +usecasesSheet['C11']['v'] * 18,
+                    }
+                    typeM.sum = typeM.simple + typeM.medium + typeM.hard
+
+                    var typeT = {
+                        simple: +usecasesSheet['C13']['v'] * 7.5,
+                        medium: +usecasesSheet['C14']['v'] * 15,
+                        hard: +usecasesSheet['C15']['v'] * 22.5,
+                    }
+                    typeT.sum = typeT.simple + typeT.medium + typeT.hard
+
+                    TBF = typeB.sum + typeM.sum + typeT.sum;
+                    // console.log('TBF: ', TBF);
+                }
+
+                // He so phuc tap KT-CN
+                {
+                    var technicalSheet = workbook.Sheets[workbook.SheetNames[3]]
+                    var coefficients = []
+
+                    for (let i = 6; i <= 18; i++) {
+                        coefficients.push(+technicalSheet[`C${i}`]['v'] * (+technicalSheet[`D${i}`]['v']))
+                    }
+
+                    coefficients.forEach((x) => {
+                        TFW += x;
+                    })
+                    TCF = 0.6 + (0.01 * TFW);
+                    // console.log("TFW: ", TFW, "TCF: ", TCF);
+                }
+
+                // He so PTMT - KN - NOI SUY
+                {
+                    var enviromentSheet = workbook.Sheets[workbook.SheetNames[4]]
+                    var enviromentCoef = []
+                    for (let i = 7; i <= 15; i++) {
+                        if (i == 12) continue;
+                        var enviModel = {
+                            co: +enviromentSheet[`C${i}`]['v'],
+                            M: +enviromentSheet[`D${i}`]['v'],
+                        }
+
+                        enviModel.result = enviModel.co * enviModel.M;
+                        if (enviModel.result <= 0) enviModel.S = 0;
+                        if (enviModel.result > 0) enviModel.S = 0.05;
+                        if (enviModel.result > 1) enviModel.S = 0.1;
+                        if (enviModel.result > 2) enviModel.S = 0.6;
+                        if (enviModel.result > 3) enviModel.S = 1;
+
+                        enviromentCoef.push(enviModel)
+                    }
+
+                    enviromentCoef.forEach((x) => {
+                        EFW += x.result;
+                        ES += x.M;
+                    })
+
+                    EF = (1.4 - 0.03 * EFW).toFixed(4);
+                    if (ES < 1) P = 48;
+                    if (ES >= 1) P = 32;
+                    if (ES >= 3) P = 20;
+                    // console.log("EFW: ", EFW, "EF: ", EF, "ES: ", ES, "P: ", P);
+                }
+
+                // Luong binh quan
+                {
+                    var salarySheet = workbook.Sheets[workbook.SheetNames[5]]
+                    var salaries = []
+                    for (let i = 5; i <= 7; i++) {
+                        let salaryModel = {
+                            salary: +salarySheet[`B${i}`]['v'],
+                            num: +salarySheet[`C${i}`]['v'],
+                        }
+                        salaryModel.total = salaryModel.salary * salaryModel.num;
+                        salaries.push(salaryModel)
+                    }
+
+                    salaries.forEach((x) => {
+                        totalSalaryMonth += x.total;
+                        totalMan += x.num;
+                    })
+                    averageSalaryMonth = totalSalaryMonth / totalMan;
+                    averageSalaryHour = averageSalaryMonth / 20 / 8;
+                    // console.log("totalSalaryMonth: ", totalSalaryMonth, "averageSalaryMonth :", averageSalaryMonth, "averageSalaryHour: ", averageSalaryHour);
+                }
+
+                var UUCP = TBF + TAW, AUCP = (UUCP * TCF * EF).toFixed(4), E = (10 / 6 * AUCP).toFixed(4);
+                console.log("TAW: ", TAW);
+                console.log('TBF: ', TBF);
+                console.log("TFW: ", TFW, "TCF: ", TCF);
+                console.log("EFW: ", EFW, "EF: ", EF, "ES: ", ES, "P: ", P);
+                console.log("totalSalaryMonth: ", totalSalaryMonth, "averageSalaryMonth :", averageSalaryMonth, "averageSalaryHour: ", averageSalaryHour);
+
+                document.getElementById('table-result').style.display = "block";
+
+                $("tbody").append(`
+                <tr>
+                    <td><b>I</b></td>
+                    <td><b>Tính điểm trường hợp sử dụng (Use-case)</b></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>1</td>
+                    <td>Điểm Actor (TAW)</td>
+                    <td></td>
+                    <td>${TAW}</td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>Điểm Use-case (TBF)</td>
+                    <td></td>
+                    <td>${TBF}</td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td>Tính điểm UUCP</td>
+                    <td>UUCP = TAW +TBF</td>
+                    <td>${UUCP}</td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>4</td>
+                    <td>Hệ số phức tạp về KT-CN (TCF)</td>
+                    <td>TCF = 0,6 + (0,01 x TFW)</td>
+                    <td>${TCF}</td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>5</td>
+                    <td>Hệ số phức tạp về môi trường (EF)</td>
+                    <td>EF = 1,4 + (-0,03 x EFW)</td>
+                    <td>${EF}</td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>6</td>
+                    <td>Tính điểm AUCP</td>
+                    <td>AUCP = UUCP x TCF x EF</td>
+                    <td>${AUCP}</td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td><b>II</b></td>
+                    <td><b>Nội suy thời gian lao động (P)</b></td>
+                    <td><b>P: người/giờ/AUCP</b></td>
+                    <td>${P}</td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td><b>III</b></td>
+                    <td><b>Giá trị nỗ lực thực tế (E)</b></td>
+                    <td><b>E = 10/6 x AUCP</b></td>
+                    <td><b>${E}</b></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td><b>IV</b></td>
+                    <td><b>Mức lương lao động bình quân (H)</b></td>
+                    <td><b>H: người/giờ</b></td>
+                    <td><b>${averageSalaryHour}</b></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td><b>V</b></td>
+                    <td><b>Giá trị phần mềm nội bộ (G)</b></td>
+                    <td><b>G = 1,4 x E x P x H</b></td>
+                    <td><b>${formatter.format((1.4 * E * P * averageSalaryHour).toFixed(4))}</b></td>
+                    <td></td>
+                </tr>
+                `)
+
+            };
+
+            reader.onerror = function (ex) {
+                console.log(ex);
+            };
+
+            reader.readAsBinaryString(file);
+        }
+        else {
+            alert('Please choose file!!!')
+        }
+    }
+</script>
+
+</html>
