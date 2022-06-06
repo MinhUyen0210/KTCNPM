@@ -20,6 +20,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.8.0/jszip.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.8.0/xlsx.js"></script>
     <script src="https://code.jquery.com/jquery-3.5.0.js"></script>
+    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
     <title>Xác định chi phí phần mềm nội bộ</title>
 </head>
 <style>
@@ -58,6 +59,9 @@
             onclick="Upload()"
         >Xử lý</button>
     </div>
+    <!-- <div id="download">
+        <button onclick="Download()">Download</button>
+    </div> -->
     <div
         class="result"
         id="table-result"
@@ -86,11 +90,13 @@
     });
 
     document.getElementById('table-result').style.display = "none";
+
     function Upload() {
         // Get selected files from the input element.
         var file = document.getElementById("file-data").files[0];
 
         if (file) {
+
             document.getElementById('container').style.display = "none";
 
             var reader = new FileReader();
@@ -100,7 +106,6 @@
             var totalSalaryMonth = 0, averageSalaryMonth = 0, averageSalaryHour = 0, totalMan = 0;
 
             reader.onload = function (e) {
-
                 var data = e.target.result;
                 var workbook = XLSX.read(data, {
                     type: 'binary'
@@ -115,6 +120,10 @@
 
                     TAW = simpleActors + mediumActors * 2 + hardActors * 3;
                     // console.log("TAW: ", TAW);
+                    actorSheet['E4'] = { t: 'n', v: simpleActors, w: `${simpleActors}` }
+                    actorSheet['E5'] = { t: 'n', v: mediumActors * 2, w: `${mediumActors * 2}` }
+                    actorSheet['E6'] = { t: 'n', v: hardActors * 3, w: `${hardActors * 3}` }
+                    actorSheet['E7'] = { t: 'n', v: TAW, w: `${TAW}` }
                 }
 
                 // Bang tinh diem Use-case
@@ -126,7 +135,13 @@
                         medium: +usecasesSheet['C6']['v'] * 10,
                         hard: +usecasesSheet['C7']['v'] * 15,
                     }
-                    typeB.sum = typeB.simple + typeB.medium + typeB.hard
+                    typeB.sum = typeB.simple + typeB.medium + typeB.hard;
+                    typeB.count = +usecasesSheet['C5']['v'] + (+usecasesSheet['C6']['v']) + (+usecasesSheet['C7']['v'])
+
+                    usecasesSheet['C4'] = { t: 'n', v: typeB.count, w: `${typeB.count}` }
+                    usecasesSheet['D5'] = { t: 'n', v: typeB.simple, w: `${typeB.simple}` }
+                    usecasesSheet['D6'] = { t: 'n', v: typeB.medium, w: `${typeB.medium}` }
+                    usecasesSheet['D7'] = { t: 'n', v: typeB.hard, w: `${typeB.hard}` }
 
                     var typeM = {
                         simple: +usecasesSheet['C9']['v'] * 6,
@@ -134,6 +149,12 @@
                         hard: +usecasesSheet['C11']['v'] * 18,
                     }
                     typeM.sum = typeM.simple + typeM.medium + typeM.hard
+                    typeM.count = +usecasesSheet['C9']['v'] + (+usecasesSheet['C10']['v']) + (+usecasesSheet['C11']['v'])
+
+                    usecasesSheet['C8'] = { t: 'n', v: typeM.count, w: `${typeM.count}` }
+                    usecasesSheet['D9'] = { t: 'n', v: typeM.simple, w: `${typeM.simple}` }
+                    usecasesSheet['D10'] = { t: 'n', v: typeM.medium, w: `${typeM.medium}` }
+                    usecasesSheet['D11'] = { t: 'n', v: typeM.hard, w: `${typeM.hard}` }
 
                     var typeT = {
                         simple: +usecasesSheet['C13']['v'] * 7.5,
@@ -141,9 +162,16 @@
                         hard: +usecasesSheet['C15']['v'] * 22.5,
                     }
                     typeT.sum = typeT.simple + typeT.medium + typeT.hard
+                    typeT.count = +usecasesSheet['C13']['v'] + (+usecasesSheet['C14']['v']) + (+usecasesSheet['C15']['v'])
+
+                    usecasesSheet['C12'] = { t: 'n', v: typeT.count, w: `${typeT.count}` }
+                    usecasesSheet['D13'] = { t: 'n', v: typeT.simple, w: `${typeT.simple}` }
+                    usecasesSheet['D14'] = { t: 'n', v: typeT.medium, w: `${typeT.medium}` }
+                    usecasesSheet['D15'] = { t: 'n', v: typeT.hard, w: `${typeT.hard}` }
 
                     TBF = typeB.sum + typeM.sum + typeT.sum;
-                    // console.log('TBF: ', TBF);
+                    usecasesSheet['D16'] = { t: 'n', v: TBF, w: `${TBF}` }
+
                 }
 
                 // He so phuc tap KT-CN
@@ -280,7 +308,7 @@
                     <td><b>II</b></td>
                     <td><b>Nội suy thời gian lao động (P)</b></td>
                     <td><b>P: người/giờ/AUCP</b></td>
-                    <td>${P}</td>
+                    <td><b>${P}</b></td>
                     <td></td>
                 </tr>
                 <tr>
@@ -306,6 +334,18 @@
                 </tr>
                 `)
 
+                // download file
+                {
+                    XLSX.utils.book_new('result.xlsx');
+                    XLSX.writeFile(workbook, "result.xlsx");
+
+                    var a = document.createElement("a");
+                    a.download = 'result.xlsx';
+                    document.body.appendChild(a);
+                    done = true;
+                    a.click();
+                    document.body.removeChild(a);
+                }
             };
 
             reader.onerror = function (ex) {
@@ -317,7 +357,29 @@
         else {
             alert('Please choose file!!!')
         }
+
+        // Create new file
+        // function CreateFile() {
+        //     var wb = XLSX.utils.book_new('test.xlsx');
+
+        //     let data = [{
+        //         Test: 1,
+        //         image_url: 'kjadhfkjdasfhlkjf.sfkjdhsfkj',
+        //         book_url: 'kjadhfkjdasfhlkjf.sfkjdhsfkj'
+        //     }, {
+        //         Test: 2,
+        //         image_url: '2.sfkjdhsfkj',
+        //         book_url: '2.sfkjdhsfkj'
+        //     }]
+
+        //     let ws_vncert = XLSX.utils.json_to_sheet(data);
+        //     XLSX.utils.book_append_sheet(wb, ws_vncert, "VNCert");
+
+        //     XLSX.writeFile(wb, file_name);
+        // }
+
     }
+
 </script>
 
 </html>
