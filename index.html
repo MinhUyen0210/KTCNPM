@@ -240,7 +240,7 @@
               w: `${typeT.hard}`,
             };
 
-            TBF = typeB.sum + typeM.sum + typeT.sum;
+            TBF = (typeB.sum + typeM.sum + typeT.sum).toFixed(4);
             usecasesSheet["D16"] = { t: "n", v: TBF, w: `${TBF}` };
           }
 
@@ -267,7 +267,7 @@
             coefficients.forEach((x) => {
               TFW += x.result;
             });
-            TCF = 0.6 + 0.01 * TFW;
+            TCF = (0.6 + 0.01 * TFW).toFixed(4);
 
             technicalSheet[`E5`] = { t: "n", v: TFW, w: `${TFW}` };
             technicalSheet[`C19`] = { t: "n", v: TCF, w: `${TCF}` };
