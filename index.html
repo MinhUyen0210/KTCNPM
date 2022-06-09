@@ -1,493 +1,472 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+
+<head>
     <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+        http-equiv="X-UA-Compatible"
+        content="IE=edge"
+    />
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    />
     <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css"
-      integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
-      crossorigin="anonymous"
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css"
+        integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
+        crossorigin="anonymous"
     />
     <script src="https://code.jquery.com/jquery-3.5.0.js"></script>
     <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
     <title>Xác định chi phí phần mềm nội bộ</title>
-  </head>
-  <style>
+</head>
+<style>
     h2 {
-      text-align: center;
+        text-align: center;
     }
 
     .result {
-      margin-top: 50px;
-      margin-left: 100px;
-      margin-right: 100px;
-      margin-bottom: 50px;
+        margin-top: 50px;
+        margin-left: 100px;
+        margin-right: 100px;
+        margin-bottom: 50px;
     }
 
     .container {
-      padding-top: 100px;
+        padding-top: 100px;
     }
-  </style>
+</style>
 
-  <body>
-    <div class="container" id="container">
-      <h3>Chọn file để xử lý</h3>
-      <br />
-      <input
-        type="file"
-        name=""
-        id="file-data"
-        accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-      />
-      <button id="btn-upload" class="btn btn-primary" onclick="Upload()">
-        Xử lý
-      </button>
+<body>
+    <div
+        class="container"
+        id="container"
+    >
+        <h3>Chọn file để xử lý</h3>
+        <br />
+        <input
+            type="file"
+            name=""
+            id="file-data"
+            accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        />
+        <button
+            id="btn-upload"
+            class="btn btn-primary"
+            onclick="Upload()"
+        > Xử lý </button>
     </div>
-    <div class="result" id="table-result">
-      <div>
-        <h2>BẢNG XÁC ĐỊNH GIÁ PHẦN MỀM</h2>
-        <button class="btn btn-primary" onclick="Download()">
-          Tải kết quả
-        </button>
-      </div>
-      <br />
-      <table class="table">
-        <thead>
-          <tr>
-            <th>TT</th>
-            <th>Hạng mục</th>
-            <th>Diễn giải</th>
-            <th>Giá trị</th>
-            <th>Ghi chú</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+    <div
+        class="result"
+        id="table-result"
+    >
+        <div>
+            <h2>BẢNG TỔNG HỢP CHI PHÍ PHẦN MỀM</h2>
+            <button
+                class="btn btn-primary"
+                onclick="Download()"
+            > Tải kết quả </button>
+        </div>
+        <br />
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>TT</th>
+                    <th>Khoản mục chi phí</th>
+                    <th>Cách tính</th>
+                    <th>Giá trị</th>
+                    <th>Ký hiệu</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
     </div>
-  </body>
-  <script>
+</body>
+<script>
     var formatter = new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "VND",
+        style: "currency",
+        currency: "VND",
     });
 
     document.getElementById("table-result").style.display = "none";
 
     var newWB;
     function Download() {
-      // download file
-      XLSX.utils.book_new("result.xlsx");
-      XLSX.writeFile(newWB, "result.xlsx");
+        // download file
+        XLSX.utils.book_new("result.xlsx");
+        XLSX.writeFile(newWB, "result.xlsx");
 
-      var a = document.createElement("a");
-      a.download = "result.xlsx";
-      document.body.appendChild(a);
-      done = true;
-      a.click();
-      document.body.removeChild(a);
+        var a = document.createElement("a");
+        a.download = "result.xlsx";
+        document.body.appendChild(a);
+        done = true;
+        a.click();
+        document.body.removeChild(a);
     }
 
     function Upload() {
-      // Get selected files from the input element.
-      var file = document.getElementById("file-data").files[0];
+        // Get selected files from the input element.
+        var file = document.getElementById("file-data").files[0];
 
-      if (file) {
-        document.getElementById("container").style.display = "none";
+        if (file) {
+            document.getElementById("container").style.display = "none";
 
-        var reader = new FileReader();
+            var reader = new FileReader();
 
-        var TAW = 0,
-          TBF = 0,
-          TFW = 0,
-          TCF = 0;
-        var EFW = 0,
-          EF = 0,
-          ES = 0,
-          P = 0;
-        var totalSalaryMonth = 0,
-          averageSalaryMonth = 0,
-          averageSalaryHour = 0,
-          totalMan = 0;
+            var TAW = 0,
+                TBF = 0,
+                TFW = 0,
+                TCF = 0,
+                EFW = 0,
+                EF = 0,
+                ES = 0,
+                P = 0, totalSalaryMonth = 0,
+                averageSalaryMonth = 0,
+                averageSalaryHour = 0,
+                totalMan = 0;
 
-        reader.onload = function (e) {
-          var data = e.target.result;
-          var workbook = XLSX.read(data, {
-            type: "binary",
-          });
+            reader.onload = function (e) {
+                var data = e.target.result;
+                var workbook = XLSX.read(data, {
+                    type: "binary",
+                });
 
-          // Bang tinh diem cua cac tac nhan
-          {
-            var actorSheet = workbook.Sheets[workbook.SheetNames[1]];
-            var simpleActors = +actorSheet["D4"]["v"];
-            var mediumActors = +actorSheet["D5"]["v"];
-            var hardActors = +actorSheet["D6"]["v"];
+                // Bang tinh diem cua cac tac nhan
+                {
+                    var actorSheet = workbook.Sheets[workbook.SheetNames[1]];
+                    var simpleActors = +actorSheet["D4"]["v"];
+                    var mediumActors = +actorSheet["D5"]["v"];
+                    var hardActors = +actorSheet["D6"]["v"];
 
-            TAW = simpleActors + mediumActors * 2 + hardActors * 3;
-            // console.log("TAW: ", TAW);
-            actorSheet["E4"] = {
-              t: "n",
-              v: simpleActors,
-              w: `${simpleActors}`,
-            };
-            actorSheet["E5"] = {
-              t: "n",
-              v: mediumActors * 2,
-              w: `${mediumActors * 2}`,
-            };
-            actorSheet["E6"] = {
-              t: "n",
-              v: hardActors * 3,
-              w: `${hardActors * 3}`,
-            };
-            actorSheet["E7"] = { t: "n", v: TAW, w: `${TAW}` };
-          }
+                    TAW = simpleActors + mediumActors * 2 + hardActors * 3;
+                    // console.log("TAW: ", TAW);
+                    actorSheet["E4"] = {
+                        t: "n",
+                        v: simpleActors,
+                        w: `${simpleActors}`,
+                    };
+                    actorSheet["E5"] = {
+                        t: "n",
+                        v: mediumActors * 2,
+                        w: `${mediumActors * 2}`,
+                    };
+                    actorSheet["E6"] = {
+                        t: "n",
+                        v: hardActors * 3,
+                        w: `${hardActors * 3}`,
+                    };
+                    actorSheet["E7"] = { t: "n", v: TAW, w: `${TAW}` };
+                }
 
-          // Bang tinh diem Use-case
-          {
-            var usecasesSheet = workbook.Sheets[workbook.SheetNames[2]];
+                // Bang tinh diem Use-case
+                {
+                    var usecasesSheet = workbook.Sheets[workbook.SheetNames[2]];
 
-            var typeB = {
-              simple: +usecasesSheet["C5"]["v"] * 5,
-              medium: +usecasesSheet["C6"]["v"] * 10,
-              hard: +usecasesSheet["C7"]["v"] * 15,
-            };
-            typeB.sum = typeB.simple + typeB.medium + typeB.hard;
-            typeB.count =
-              +usecasesSheet["C5"]["v"] +
-              +usecasesSheet["C6"]["v"] +
-              +usecasesSheet["C7"]["v"];
+                    var typeB = {
+                        simple: +usecasesSheet["C5"]["v"] * 5,
+                        medium: +usecasesSheet["C6"]["v"] * 10,
+                        hard: +usecasesSheet["C7"]["v"] * 15,
+                    };
+                    typeB.sum = typeB.simple + typeB.medium + typeB.hard;
+                    typeB.count =
+                        +usecasesSheet["C5"]["v"] +
+                        +usecasesSheet["C6"]["v"] +
+                        +usecasesSheet["C7"]["v"];
 
-            usecasesSheet["C4"] = {
-              t: "n",
-              v: typeB.count,
-              w: `${typeB.count}`,
-            };
-            usecasesSheet["D5"] = {
-              t: "n",
-              v: typeB.simple,
-              w: `${typeB.simple}`,
-            };
-            usecasesSheet["D6"] = {
-              t: "n",
-              v: typeB.medium,
-              w: `${typeB.medium}`,
-            };
-            usecasesSheet["D7"] = { t: "n", v: typeB.hard, w: `${typeB.hard}` };
+                    usecasesSheet["C4"] = {
+                        t: "n",
+                        v: typeB.count,
+                        w: `${typeB.count}`,
+                    };
+                    usecasesSheet["D5"] = {
+                        t: "n",
+                        v: typeB.simple,
+                        w: `${typeB.simple}`,
+                    };
+                    usecasesSheet["D6"] = {
+                        t: "n",
+                        v: typeB.medium,
+                        w: `${typeB.medium}`,
+                    };
+                    usecasesSheet["D7"] = { t: "n", v: typeB.hard, w: `${typeB.hard}` };
 
-            var typeM = {
-              simple: +usecasesSheet["C9"]["v"] * 6,
-              medium: +usecasesSheet["C10"]["v"] * 12,
-              hard: +usecasesSheet["C11"]["v"] * 18,
-            };
-            typeM.sum = typeM.simple + typeM.medium + typeM.hard;
-            typeM.count =
-              +usecasesSheet["C9"]["v"] +
-              +usecasesSheet["C10"]["v"] +
-              +usecasesSheet["C11"]["v"];
+                    var typeM = {
+                        simple: +usecasesSheet["C9"]["v"] * 6,
+                        medium: +usecasesSheet["C10"]["v"] * 12,
+                        hard: +usecasesSheet["C11"]["v"] * 18,
+                    };
+                    typeM.sum = typeM.simple + typeM.medium + typeM.hard;
+                    typeM.count =
+                        +usecasesSheet["C9"]["v"] +
+                        +usecasesSheet["C10"]["v"] +
+                        +usecasesSheet["C11"]["v"];
 
-            usecasesSheet["C8"] = {
-              t: "n",
-              v: typeM.count,
-              w: `${typeM.count}`,
-            };
-            usecasesSheet["D9"] = {
-              t: "n",
-              v: typeM.simple,
-              w: `${typeM.simple}`,
-            };
-            usecasesSheet["D10"] = {
-              t: "n",
-              v: typeM.medium,
-              w: `${typeM.medium}`,
-            };
-            usecasesSheet["D11"] = {
-              t: "n",
-              v: typeM.hard,
-              w: `${typeM.hard}`,
-            };
+                    usecasesSheet["C8"] = {
+                        t: "n",
+                        v: typeM.count,
+                        w: `${typeM.count}`,
+                    };
+                    usecasesSheet["D9"] = {
+                        t: "n",
+                        v: typeM.simple,
+                        w: `${typeM.simple}`,
+                    };
+                    usecasesSheet["D10"] = {
+                        t: "n",
+                        v: typeM.medium,
+                        w: `${typeM.medium}`,
+                    };
+                    usecasesSheet["D11"] = {
+                        t: "n",
+                        v: typeM.hard,
+                        w: `${typeM.hard}`,
+                    };
 
-            var typeT = {
-              simple: +usecasesSheet["C13"]["v"] * 7.5,
-              medium: +usecasesSheet["C14"]["v"] * 15,
-              hard: +usecasesSheet["C15"]["v"] * 22.5,
-            };
-            typeT.sum = typeT.simple + typeT.medium + typeT.hard;
-            typeT.count =
-              +usecasesSheet["C13"]["v"] +
-              +usecasesSheet["C14"]["v"] +
-              +usecasesSheet["C15"]["v"];
+                    var typeT = {
+                        simple: +usecasesSheet["C13"]["v"] * 7.5,
+                        medium: +usecasesSheet["C14"]["v"] * 15,
+                        hard: +usecasesSheet["C15"]["v"] * 22.5,
+                    };
+                    typeT.sum = typeT.simple + typeT.medium + typeT.hard;
+                    typeT.count =
+                        +usecasesSheet["C13"]["v"] +
+                        +usecasesSheet["C14"]["v"] +
+                        +usecasesSheet["C15"]["v"];
 
-            usecasesSheet["C12"] = {
-              t: "n",
-              v: typeT.count,
-              w: `${typeT.count}`,
-            };
-            usecasesSheet["D13"] = {
-              t: "n",
-              v: typeT.simple,
-              w: `${typeT.simple}`,
-            };
-            usecasesSheet["D14"] = {
-              t: "n",
-              v: typeT.medium,
-              w: `${typeT.medium}`,
-            };
-            usecasesSheet["D15"] = {
-              t: "n",
-              v: typeT.hard,
-              w: `${typeT.hard}`,
-            };
+                    usecasesSheet["C12"] = {
+                        t: "n",
+                        v: typeT.count,
+                        w: `${typeT.count}`,
+                    };
+                    usecasesSheet["D13"] = {
+                        t: "n",
+                        v: typeT.simple,
+                        w: `${typeT.simple}`,
+                    };
+                    usecasesSheet["D14"] = {
+                        t: "n",
+                        v: typeT.medium,
+                        w: `${typeT.medium}`,
+                    };
+                    usecasesSheet["D15"] = {
+                        t: "n",
+                        v: typeT.hard,
+                        w: `${typeT.hard}`,
+                    };
 
-            TBF = (typeB.sum + typeM.sum + typeT.sum).toFixed(4);
-            usecasesSheet["D16"] = { t: "n", v: TBF, w: `${TBF}` };
-          }
+                    TBF = (typeB.sum + typeM.sum + typeT.sum).toFixed(4);
+                    usecasesSheet["D16"] = { t: "n", v: TBF, w: `${TBF}` };
+                }
 
-          // He so phuc tap KT-CN
-          {
-            var technicalSheet = workbook.Sheets[workbook.SheetNames[3]];
-            var coefficients = [];
+                // He so phuc tap KT-CN
+                {
+                    var technicalSheet = workbook.Sheets[workbook.SheetNames[3]];
+                    var coefficients = [];
 
-            for (let i = 6; i <= 18; i++) {
-              let coefficientModel = {
-                co: +technicalSheet[`C${i}`]["v"],
-                M: +technicalSheet[`D${i}`]["v"],
-              };
-              coefficientModel.result =
-                coefficientModel.M * coefficientModel.co;
-              technicalSheet[`E${i}`] = {
-                t: "n",
-                v: coefficientModel.result,
-                w: `${coefficientModel.result}`,
-              };
-              coefficients.push(coefficientModel);
-            }
+                    for (let i = 6; i <= 18; i++) {
+                        let coefficientModel = {
+                            co: +technicalSheet[`C${i}`]["v"],
+                            M: +technicalSheet[`D${i}`]["v"],
+                        };
+                        coefficientModel.result =
+                            coefficientModel.M * coefficientModel.co;
+                        technicalSheet[`E${i}`] = {
+                            t: "n",
+                            v: coefficientModel.result,
+                            w: `${coefficientModel.result}`,
+                        };
+                        coefficients.push(coefficientModel);
+                    }
 
-            coefficients.forEach((x) => {
-              TFW += x.result;
-            });
-            TCF = (0.6 + 0.01 * TFW).toFixed(4);
+                    coefficients.forEach((x) => {
+                        TFW += x.result;
+                    });
+                    TCF = (0.6 + 0.01 * TFW).toFixed(4);
 
-            technicalSheet[`E5`] = { t: "n", v: TFW, w: `${TFW}` };
-            technicalSheet[`C19`] = { t: "n", v: TCF, w: `${TCF}` };
-          }
+                    technicalSheet[`E5`] = { t: "n", v: TFW, w: `${TFW}` };
+                    technicalSheet[`C19`] = { t: "n", v: TCF, w: `${TCF}` };
+                }
 
-          // He so PTMT - KN - NOI SUY
-          {
-            var enviromentSheet = workbook.Sheets[workbook.SheetNames[4]];
-            var enviromentCoef = [];
-            for (let i = 7; i <= 15; i++) {
-              if (i == 12) continue;
-              let enviModel = {
-                co: +enviromentSheet[`C${i}`]["v"],
-                M: +enviromentSheet[`D${i}`]["v"],
-              };
+                // He so PTMT - KN - NOI SUY
+                {
+                    var enviromentSheet = workbook.Sheets[workbook.SheetNames[4]];
+                    var enviromentCoef = [];
+                    for (let i = 7; i <= 15; i++) {
+                        if (i == 12) continue;
+                        let enviModel = {
+                            co: +enviromentSheet[`C${i}`]["v"],
+                            M: +enviromentSheet[`D${i}`]["v"],
+                        };
 
-              enviModel.result = enviModel.co * enviModel.M;
-              enviromentSheet[`E${i}`] = {
-                t: "n",
-                v: enviModel.result,
-                w: `${enviModel.result}`,
-              };
+                        enviModel.result = enviModel.co * enviModel.M;
+                        enviromentSheet[`E${i}`] = {
+                            t: "n",
+                            v: enviModel.result,
+                            w: `${enviModel.result}`,
+                        };
 
-              if (enviModel.result <= 0) enviModel.S = 0;
-              if (enviModel.result > 0) enviModel.S = 0.05;
-              if (enviModel.result > 1) enviModel.S = 0.1;
-              if (enviModel.result > 2) enviModel.S = 0.6;
-              if (enviModel.result > 3) enviModel.S = 1;
+                        if (enviModel.result <= 0) enviModel.S = 0;
+                        if (enviModel.result > 0) enviModel.S = 0.05;
+                        if (enviModel.result > 1) enviModel.S = 0.1;
+                        if (enviModel.result > 2) enviModel.S = 0.6;
+                        if (enviModel.result > 3) enviModel.S = 1;
 
-              enviromentCoef.push(enviModel);
-            }
+                        enviromentCoef.push(enviModel);
+                    }
 
-            enviromentCoef.forEach((x) => {
-              EFW += x.result;
-              ES += x.S;
-            });
+                    enviromentCoef.forEach((x) => {
+                        EFW += x.result;
+                        ES += x.S;
+                    });
 
-            enviromentSheet[`E5`] = { t: "n", v: EFW, w: `${EFW}` };
-            enviromentSheet[`F17`] = { t: "n", v: ES, w: `${ES}` };
+                    enviromentSheet[`E5`] = { t: "n", v: EFW, w: `${EFW}` };
+                    enviromentSheet[`F17`] = { t: "n", v: ES, w: `${ES}` };
 
-            EF = (1.4 - 0.03 * EFW).toFixed(4);
-            enviromentSheet[`E16`] = { t: "n", v: EF, w: `${EF}` };
+                    EF = (1.4 - 0.03 * EFW).toFixed(4);
+                    enviromentSheet[`E16`] = { t: "n", v: EF, w: `${EF}` };
 
-            if (ES < 1) P = 48;
-            if (ES >= 1) P = 32;
-            if (ES >= 3) P = 20;
-            enviromentSheet[`C18`] = { t: "n", v: P, w: `${P}` };
-          }
+                    if (ES < 1) P = 48;
+                    if (ES >= 1) P = 32;
+                    if (ES >= 3) P = 20;
+                    enviromentSheet[`C18`] = { t: "n", v: P, w: `${P}` };
+                }
 
-          // Luong binh quan
-          {
-            var salarySheet = workbook.Sheets[workbook.SheetNames[5]];
-            var salaries = [];
-            for (let i = 5; i <= 7; i++) {
-              let salaryModel = {
-                salary: +salarySheet[`B${i}`]["v"],
-                num: +salarySheet[`C${i}`]["v"],
-              };
-              salaryModel.total = salaryModel.salary * salaryModel.num;
-              salarySheet[`D${i}`] = {
-                t: "n",
-                v: salaryModel.total,
-                w: `${salaryModel.total}`,
-              };
-              salaries.push(salaryModel);
-            }
+                // Luong binh quan
+                {
+                    var salarySheet = workbook.Sheets[workbook.SheetNames[5]];
+                    var salaries = [];
+                    for (let i = 5; i <= 7; i++) {
+                        let salaryModel = {
+                            salary: +salarySheet[`B${i}`]["v"],
+                            num: +salarySheet[`C${i}`]["v"],
+                        };
+                        salaryModel.total = salaryModel.salary * salaryModel.num;
+                        salarySheet[`D${i}`] = {
+                            t: "n",
+                            v: salaryModel.total,
+                            w: `${salaryModel.total}`,
+                        };
+                        salaries.push(salaryModel);
+                    }
 
-            salaries.forEach((x) => {
-              totalSalaryMonth += x.total;
-              totalMan += x.num;
-            });
-            averageSalaryMonth = totalSalaryMonth / totalMan;
-            averageSalaryHour = averageSalaryMonth / 20 / 8;
+                    salaries.forEach((x) => {
+                        totalSalaryMonth += x.total;
+                        totalMan += x.num;
+                    });
+                    averageSalaryMonth = totalSalaryMonth / totalMan;
+                    averageSalaryHour = averageSalaryMonth / 20 / 8;
 
-            salarySheet[`D8`] = {
-              t: "n",
-              v: totalSalaryMonth,
-              w: `${totalSalaryMonth}`,
-            };
-            salarySheet[`D9`] = {
-              t: "n",
-              v: averageSalaryMonth,
-              w: `${averageSalaryMonth}`,
-            };
-            salarySheet[`D10`] = {
-              t: "n",
-              v: averageSalaryHour,
-              w: `${averageSalaryHour}`,
-            };
-          }
+                    salarySheet[`D8`] = {
+                        t: "n",
+                        v: totalSalaryMonth,
+                        w: `${totalSalaryMonth}`,
+                    };
+                    salarySheet[`D9`] = {
+                        t: "n",
+                        v: averageSalaryMonth,
+                        w: `${averageSalaryMonth}`,
+                    };
+                    salarySheet[`D10`] = {
+                        t: "n",
+                        v: averageSalaryHour,
+                        w: `${averageSalaryHour}`,
+                    };
+                }
 
-          var UUCP = TBF + TAW,
-            AUCP = (UUCP * TCF * EF).toFixed(4),
-            E = ((10 / 6) * AUCP).toFixed(4),
-            G = (1.4 * E * P * averageSalaryHour).toFixed(4);
+                var UUCP = TBF + TAW,
+                    AUCP = (UUCP * TCF * EF).toFixed(4),
+                    E = ((10 / 6) * AUCP).toFixed(4),
+                    G = (1.4 * E * P * averageSalaryHour).toFixed(4),
+                    C = (G * 0.65).toFixed(4),
+                    TL = (G * 0.06 + C * 0.06).toFixed(4),
+                    GPM = parseFloat(G) + parseFloat(C) + parseFloat(TL);
 
-          // Xac dinh gia phan mem
-          {
-            var resultSheet = workbook.Sheets[workbook.SheetNames[0]];
-            resultSheet[`D6`] = { t: "n", v: TAW, w: `${TAW}` };
-            resultSheet[`D7`] = { t: "n", v: TBF, w: `${TBF}` };
-            resultSheet[`D8`] = { t: "n", v: UUCP, w: `${UUCP}` };
-            resultSheet[`D9`] = { t: "n", v: TCF, w: `${TCF}` };
-            resultSheet[`D10`] = { t: "n", v: EF, w: `${EF}` };
-            resultSheet[`D11`] = { t: "n", v: AUCP, w: `${AUCP}` };
-            resultSheet[`D12`] = { t: "n", v: P, w: `${P}` };
-            resultSheet[`D13`] = { t: "n", v: E, w: `${E}` };
-            resultSheet[`D14`] = {
-              t: "n",
-              v: averageSalaryHour,
-              w: `${averageSalaryHour}`,
-            };
-            resultSheet[`D15`] = { t: "n", v: G, w: `${G}` };
-          }
 
-          newWB = workbook;
-          console.log("TAW: ", TAW);
-          console.log("TBF: ", TBF);
-          console.log("TFW: ", TFW, "TCF: ", TCF);
-          console.log("EFW: ", EFW, "EF: ", EF, "ES: ", ES, "P: ", P);
-          console.log(
-            "totalSalaryMonth: ",
-            totalSalaryMonth,
-            "averageSalaryMonth :",
-            averageSalaryMonth,
-            "averageSalaryHour: ",
-            averageSalaryHour
-          );
+                // Xac dinh gia phan mem
+                {
+                    var resultSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    resultSheet[`D6`] = { t: "n", v: TAW, w: `${TAW}` };
+                    resultSheet[`D7`] = { t: "n", v: TBF, w: `${TBF}` };
+                    resultSheet[`D8`] = { t: "n", v: UUCP, w: `${UUCP}` };
+                    resultSheet[`D9`] = { t: "n", v: TCF, w: `${TCF}` };
+                    resultSheet[`D10`] = { t: "n", v: EF, w: `${EF}` };
+                    resultSheet[`D11`] = { t: "n", v: AUCP, w: `${AUCP}` };
+                    resultSheet[`D12`] = { t: "n", v: P, w: `${P}` };
+                    resultSheet[`D13`] = { t: "n", v: E, w: `${E}` };
+                    resultSheet[`D14`] = {
+                        t: "n",
+                        v: averageSalaryHour,
+                        w: `${averageSalaryHour}`,
+                    };
+                    resultSheet[`D15`] = { t: "n", v: G, w: `${G}` };
+                }
 
-          document.getElementById("table-result").style.display = "block";
+                newWB = workbook;
+                console.log("TAW: ", TAW);
+                console.log("TBF: ", TBF);
+                console.log("TFW: ", TFW, "TCF: ", TCF);
+                console.log("EFW: ", EFW, "EF: ", EF, "ES: ", ES, "P: ", P);
+                console.log(
+                    "totalSalaryMonth: ",
+                    totalSalaryMonth,
+                    "averageSalaryMonth :",
+                    averageSalaryMonth,
+                    "averageSalaryHour: ",
+                    averageSalaryHour
+                );
 
-          $("tbody").append(`
-                <tr>
-                    <td><b>I</b></td>
-                    <td><b>Tính điểm trường hợp sử dụng (Use-case)</b></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                </tr>
+                document.getElementById("table-result").style.display = "block";
+
+                $("tbody").append(`
                 <tr>
                     <td>1</td>
-                    <td>Điểm Actor (TAW)</td>
-                    <td></td>
-                    <td>${TAW}</td>
-                    <td></td>
+                    <td>Giá trị phần mềm</td>
+                    <td>1,4 x E x P x H</td>
+                    <td>${formatter.format(G)}</td>
+                    <td>G</td>
                 </tr>
                 <tr>
                     <td>2</td>
-                    <td>Điểm Use-case (TBF)</td>
-                    <td></td>
-                    <td>${TBF}</td>
-                    <td></td>
+                    <td>Chi phí chung</td>
+                    <td>G x tỷ lệ (0.65)</td>
+                    <td>${formatter.format(C)}</td>
+                    <td>C</td>
                 </tr>
                 <tr>
                     <td>3</td>
-                    <td>Tính điểm UUCP</td>
-                    <td>UUCP = TAW +TBF</td>
-                    <td>${UUCP}</td>
-                    <td></td>
+                    <td>Thu nhập chịu thuế tính trước</td>
+                    <td>(G+C) x tỷ lệ (0.06)</td>
+                    <td>${formatter.format(TL)}</td>
+                    <td>TL</td>
                 </tr>
                 <tr>
                     <td>4</td>
-                    <td>Hệ số phức tạp về KT-CN (TCF)</td>
-                    <td>TCF = 0,6 + (0,01 x TFW)</td>
-                    <td>${TCF}</td>
-                    <td></td>
+                    <td>Chi phí phần mềm</td>
+                    <td>G + C + TL</td>
+                    <td>${formatter.format(GPM)}</td>
+                    <td>GPM</td>
                 </tr>
                 <tr>
-                    <td>5</td>
-                    <td>Hệ số phức tạp về môi trường (EF)</td>
-                    <td>EF = 1,4 + (-0,03 x EFW)</td>
-                    <td>${EF}</td>
+                    <td></td>
+                    <td><b>TỔNG CỘNG</b></td>
+                    <td>GPM</td>
+                    <td>${formatter.format(GPM)}</td>
                     <td></td>
                 </tr>
-                <tr>
-                    <td>6</td>
-                    <td>Tính điểm AUCP</td>
-                    <td>AUCP = UUCP x TCF x EF</td>
-                    <td>${AUCP}</td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td><b>II</b></td>
-                    <td><b>Nội suy thời gian lao động (P)</b></td>
-                    <td><b>P: người/giờ/AUCP</b></td>
-                    <td><b>${P}</b></td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td><b>III</b></td>
-                    <td><b>Giá trị nỗ lực thực tế (E)</b></td>
-                    <td><b>E = 10/6 x AUCP</b></td>
-                    <td><b>${E}</b></td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td><b>IV</b></td>
-                    <td><b>Mức lương lao động bình quân (H)</b></td>
-                    <td><b>H: người/giờ</b></td>
-                    <td><b>${formatter.format(averageSalaryHour)}</b></td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td><b>V</b></td>
-                    <td><b>Giá trị phần mềm nội bộ (G)</b></td>
-                    <td><b>G = 1,4 x E x P x H</b></td>
-                    <td><b>${formatter.format(G)}</b></td>
-                    <td></td>
-                </tr>
-                `);
-        };
+                `)
 
-        reader.onerror = function (ex) {
-          console.log(ex);
-        };
+            };
 
-        reader.readAsBinaryString(file);
-      } else {
-        alert("Please choose file!!!");
-      }
+            reader.onerror = function (ex) {
+                console.log(ex);
+            };
+
+            reader.readAsBinaryString(file);
+        } else {
+            alert("Please choose file!!!");
+        }
     }
-  </script>
+</script>
+
 </html>
